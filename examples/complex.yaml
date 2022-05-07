@@ -1,0 +1,111 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-synchro-scale
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kube-synchro-scale
+  namespace: default
+rules:
+- apiGroups: [ "apps" ]
+  resources: [ "deployments" ]
+  verbs: ["list", "get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kube-synchro-scale
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: kube-synchro-scale
+  namespace: default
+roleRef:
+  kind: Role
+  name: kube-synchro-scale
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: targetapp
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: targetapp
+  template:
+    metadata:
+      labels:
+        app: targetapp
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: '9102'
+    spec:
+      automountServiceAccountToken: true
+      serviceAccountName: kube-synchro-scale
+      containers:
+        # - Your other containers
+        - name: kube-synchro-scale
+          image: voxsoft/kube-synchro-scale:develop
+          imagePullPolicy: Always
+          resources: {}
+          ports:
+            - containerPort: 9102
+              protocol: TCP
+          env:
+            - name: DEPLOY_SOURCE_NAME
+              value: sourceapp
+            - name: DEPLOY_SOURCE_NAMESPACE
+              value: default
+            - name: DEPLOY_TARGET_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: DEPLOY_TARGET_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: scale-targetapp-based-on-sourceapp-replicas
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: targetapp
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: synchro_scale_coefficient
+        target:
+          type: AverageValue
+          averageValue: 1000m
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
