@@ -1,0 +1,11 @@
+# OS unwanted files
+.DS_Store
+
+# Editors
+.idea
+.vscode
+*.code-workspace
+
+# Ignore all files that starts at `.env` , but exclude from ignoring files that ends on `.enc`
+.env*
+!.env*.enc
