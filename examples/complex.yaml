@@ -65,11 +65,11 @@ spec:
             - name: DEPLOY_SOURCE_NAME
               value: sourceapp
             - name: DEPLOY_SOURCE_NAMESPACE
-              value: default
-            - name: DEPLOY_TARGET_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name
+                  fieldPath: metadata.namespace
+            - name: DEPLOY_TARGET_NAME
+              value: targetapp
             - name: DEPLOY_TARGET_NAMESPACE
               valueFrom:
                 fieldRef:
