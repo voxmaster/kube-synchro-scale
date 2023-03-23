@@ -2,8 +2,10 @@ stages:
   - main-build
 
 variables:
-  GIT_DEPTH: "1"
-  CONTAINER_REGISTRY: voxsoft/kube-synchro-scale
+  CONTAINER_REGISTRIES: |
+    voxsoft/kube-synchro-scale
+    voxmaster/kube-synchro-scale
+    $CI_REGISTRY_IMAGE
 
 Build:
   stage: main-build
@@ -13,10 +15,14 @@ Build:
   services:
     - docker:dind
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_IMAGE
     - docker login -u $CONTAINER_REGISTRY_USER -p $CONTAINER_REGISTRY_PASSWORD
+    ## Create a set of tags for the image with multiple registries
+    - for REGISTRY in $CONTAINER_REGISTRIES; do
+        TAGS="$TAGS -t ${REGISTRY}:${CI_COMMIT_BRANCH}";
+      done
     - docker buildx create --name mybuilder --use
-    - docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --push
-        -t ${CONTAINER_REGISTRY}:${CI_COMMIT_BRANCH} .
+    - docker buildx build --platform linux/arm64/v8,linux/amd64 --push $TAGS .
   except:
     - tags
 
@@ -28,10 +34,13 @@ Release:
   services:
     - docker:dind
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_IMAGE
     - docker login -u $CONTAINER_REGISTRY_USER -p $CONTAINER_REGISTRY_PASSWORD
+    ## Create a set of tags for the image with multiple registries
+    - for REGISTRY in $CONTAINER_REGISTRIES; do
+        TAGS="$TAGS -t ${REGISTRY}:${CI_COMMIT_TAG} -t ${REGISTRY}:latest";
+      done
     - docker buildx create --name mybuilder --use
-    - docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --push
-        -t ${CONTAINER_REGISTRY}:${CI_COMMIT_TAG} 
-        -t ${CONTAINER_REGISTRY}:latest .
+    - docker buildx build --platform linux/arm64/v8,linux/amd64 --push $TAGS .
   only:
     - tags
