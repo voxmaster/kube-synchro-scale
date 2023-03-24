@@ -22,7 +22,7 @@ Build:
         TAGS="$TAGS -t ${REGISTRY}:${CI_COMMIT_BRANCH}";
       done
     - docker buildx create --name mybuilder --use
-    - docker buildx build --platform linux/arm64/v8,linux/amd64 --push $TAGS .
+    - docker buildx build --provenance=false --platform linux/arm64/v8,linux/amd64 --push $TAGS .
   except:
     - tags
 
@@ -41,6 +41,6 @@ Release:
         TAGS="$TAGS -t ${REGISTRY}:${CI_COMMIT_TAG} -t ${REGISTRY}:latest";
       done
     - docker buildx create --name mybuilder --use
-    - docker buildx build --platform linux/arm64/v8,linux/amd64 --push $TAGS .
+    - docker buildx build --provenance=false --platform linux/arm64/v8,linux/amd64 --push $TAGS .
   only:
     - tags
