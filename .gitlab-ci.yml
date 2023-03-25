@@ -4,7 +4,6 @@ stages:
 variables:
   CONTAINER_REGISTRIES: |
     voxsoft/kube-synchro-scale
-    voxmaster/kube-synchro-scale
     $CI_REGISTRY_IMAGE
 
 Build:

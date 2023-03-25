@@ -1,4 +1,7 @@
 # kube-synchro-scale
+Source: https://gitlab.com/voxsoft/tools/kube-synchro-scale  
+[![dockerhub-voxsoft](https://img.shields.io/docker/pulls/voxsoft/kube-synchro-scale.svg)](https://hub.docker.com/r/voxsoft/kube-synchro-scale)
+
 Publish metrics that allows you to scale 2 Kubernetes Deployments almost synchronously using HPA
 
 ## How does it works
